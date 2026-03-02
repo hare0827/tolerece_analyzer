@@ -17,6 +17,9 @@ export function ResultPanel({ result, targetTol, mcRunning }: Props) {
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 5);
 
+  // Worst Case 방향 중 하나라도 목표 초과 시 경고
+  const wcExceeds = Math.max(result.worstCase.plus, result.worstCase.minus) > targetTol;
+
   return (
     <div className="space-y-4">
       {/* 판정 */}
@@ -28,7 +31,14 @@ export function ResultPanel({ result, targetTol, mcRunning }: Props) {
       {/* 주요 결과 */}
       <div className="bg-gray-50 rounded-lg p-3 space-y-1">
         <div className={ROW}>
-          <span className={LABEL}>Worst Case</span>
+          <span className={LABEL}>
+            Worst Case
+            {wcExceeds && (
+              <span className="ml-1.5 text-xs font-semibold text-yellow-600 bg-yellow-50 border border-yellow-300 rounded px-1 py-0.5">
+                목표 초과
+              </span>
+            )}
+          </span>
           <span className={VALUE}>
             +{fmt4(result.worstCase.plus)} / -{fmt4(result.worstCase.minus)} mm
           </span>

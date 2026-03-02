@@ -27,8 +27,9 @@ export function SensitivityChart({ sensitivity }: Props) {
             name="기여도"
             dataKey="value"
             stroke="#f97316"
-            fill="#fb923c"
-            fillOpacity={0.4}
+            strokeWidth={2}
+            fill="#f97316"
+            fillOpacity={0.3}
           />
           <Tooltip formatter={(v: number | undefined) => [fmtPct(v ?? 0), '기여도']} />
         </RadarChart>
