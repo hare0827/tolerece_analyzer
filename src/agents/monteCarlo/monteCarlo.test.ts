@@ -21,16 +21,23 @@ const makePart = (
 });
 
 describe('runMonteCarlo', () => {
-  it('단일 normal 부품: mean ≈ σ√(2/π) (반정규 분포)', () => {
-    // 단일 부품: |signed_sum| = |N(0,σ)| → 기댓값 σ√(2/π)
+  it('단일 대칭 normal 부품: mean ≈ σ√(2/π)', () => {
     const result = runMonteCarlo([makePart('A', 0.05, 0.05)], 50_000);
     const sigma = 0.05 / 3;
     const expected = sigma * Math.sqrt(2 / Math.PI);
     expect(result.mean).toBeCloseTo(expected, 1);
   });
 
-  it('동일 공차 두 부품: mean < 두 부품 Worst Case (상쇄 효과)', () => {
-    // 부호 있는 합산이므로 일부 상쇄 → RSS 기반으로 mean < 2*σ√(2/π)
+  it('비대칭 공차: 큰 쪽(upper) 방향 mean이 더 큼 (sigmaPlus > sigmaMinus)', () => {
+    // upper=0.10, lower=0.02 → sigmaPlus 5배 → 양수 방향으로 편향
+    const result = runMonteCarlo([makePart('A', 0.10, 0.02)], 50_000);
+    const sigmaPlus = 0.10 / 3;
+    const expected = sigmaPlus * Math.sqrt(2 / Math.PI); // 비대칭이면 이보다 작음
+    expect(result.mean).toBeGreaterThan(0);
+    expect(result.mean).toBeLessThan(expected * 1.5);
+  });
+
+  it('동일 공차 두 부품: 상쇄 효과로 mean < 두 부품 개별 합계', () => {
     const parts = [makePart('A', 0.05, 0.05), makePart('B', 0.05, 0.05)];
     const worstCaseMean = 2 * (0.05 / 3) * Math.sqrt(2 / Math.PI);
     const result = runMonteCarlo(parts, 50_000);
@@ -60,13 +67,25 @@ describe('runMonteCarlo', () => {
     expect(total).toBe(samples);
   });
 
-  it('uniform 분포도 결과 반환', () => {
-    const result = runMonteCarlo([makePart('A', 0.05, 0.05, 'uniform')]);
-    expect(result.mean).toBeGreaterThan(0);
+  it('대칭 정규분포: 히스토그램이 음수 ~ 양수 범위에 걸침', () => {
+    const result = runMonteCarlo([makePart('A', 0.05, 0.05)], 10_000);
+    const hasNeg = result.histogram.some((h) => h.bin < 0 && h.count > 0);
+    const hasPos = result.histogram.some((h) => h.bin > 0 && h.count > 0);
+    expect(hasNeg).toBe(true);
+    expect(hasPos).toBe(true);
+  });
+
+  it('uniform 비대칭: [-lowerTol, +upperTol] 범위', () => {
+    // upper=0.10, lower=0.02 → 범위 [-0.02, 0.10]
+    const result = runMonteCarlo([makePart('A', 0.10, 0.02, 'uniform')], 10_000);
+    const minBin = Math.min(...result.histogram.map((h) => h.bin));
+    const maxBin = Math.max(...result.histogram.map((h) => h.bin));
+    expect(minBin).toBeGreaterThanOrEqual(-0.02 - 0.01);
+    expect(maxBin).toBeLessThanOrEqual(0.10 + 0.01);
   });
 
   it('Cpk 낮을수록 stdDev 증가', () => {
-    const low = runMonteCarlo([makePart('A', 0.05, 0.05, 'normal', 0.67)], 20_000);
+    const low  = runMonteCarlo([makePart('A', 0.05, 0.05, 'normal', 0.67)], 20_000);
     const high = runMonteCarlo([makePart('A', 0.05, 0.05, 'normal', 1.67)], 20_000);
     expect(low.stdDev).toBeGreaterThan(high.stdDev);
   });

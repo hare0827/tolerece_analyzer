@@ -25,7 +25,7 @@ export function Histogram({ histogram, targetTol, p99 }: Props) {
         <BarChart data={histogram} margin={{ top: 4, right: 8, bottom: 4, left: 0 }}>
           <XAxis
             dataKey="bin"
-            tickFormatter={(v: number) => fmt4(v)}
+            tickFormatter={(v: unknown) => fmt4(Number(v))}
             tick={{ fontSize: 10, fontFamily: 'monospace' }}
           />
           <YAxis tick={{ fontSize: 10 }} width={40} />
@@ -34,17 +34,30 @@ export function Histogram({ histogram, targetTol, p99 }: Props) {
             labelFormatter={(l: unknown) => `구간: ${fmt4(Number(l))} mm`}
           />
           <Bar dataKey="count" fill="#93c5fd" radius={[2, 2, 0, 0]} />
+          {/* +방향 기준선 */}
           <ReferenceLine
             x={p99}
             stroke="#ef4444"
             strokeDasharray="4 2"
-            label={{ value: 'P99', position: 'top', fontSize: 10, fill: '#ef4444' }}
+            label={{ value: '+P99', position: 'top', fontSize: 9, fill: '#ef4444' }}
+          />
+          <ReferenceLine
+            x={-p99}
+            stroke="#ef4444"
+            strokeDasharray="4 2"
+            label={{ value: '-P99', position: 'top', fontSize: 9, fill: '#ef4444' }}
           />
           <ReferenceLine
             x={targetTol}
             stroke="#16a34a"
             strokeDasharray="4 2"
-            label={{ value: '목표', position: 'top', fontSize: 10, fill: '#16a34a' }}
+            label={{ value: '+목표', position: 'top', fontSize: 9, fill: '#16a34a' }}
+          />
+          <ReferenceLine
+            x={-targetTol}
+            stroke="#16a34a"
+            strokeDasharray="4 2"
+            label={{ value: '-목표', position: 'top', fontSize: 9, fill: '#16a34a' }}
           />
         </BarChart>
       </ResponsiveContainer>

@@ -23,7 +23,7 @@ export interface MonteCarloResult {
 }
 
 export interface CalculationResult {
-  worstCase: number;
+  worstCase: { plus: number; minus: number };
   rss: number;
   monteCarlo: MonteCarloResult;
   sensitivity: SensitivityItem[];

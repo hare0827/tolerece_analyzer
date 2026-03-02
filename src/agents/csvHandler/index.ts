@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 import type { TolerancePart, CalculationResult } from '../../types/tolerance';
 
 const IMPORT_HEADERS = ['부품명', '공칭값', '+공차', '-공차', '분포', 'Cpk'] as const;
-const EXPORT_HEADERS = [...IMPORT_HEADERS, 'Worst Case', 'RSS', 'MC 평균', 'MC P99', '판정'];
+const EXPORT_HEADERS = [...IMPORT_HEADERS, 'Worst Case (+)', 'Worst Case (-)', 'RSS', 'MC 평균', 'MC P99', '판정'];
 
 /** CSV 문자열 → TolerancePart 배열. 파싱 실패 행 수도 반환 */
 export function importCSV(csvText: string): {
@@ -69,7 +69,8 @@ export function exportCSV(parts: TolerancePart[], result?: CalculationResult | n
     const base = [p.name, p.nominal, p.upperTol, p.lowerTol, p.distribution, p.cpk];
     if (result) {
       base.push(
-        result.worstCase,
+        result.worstCase.plus,
+        result.worstCase.minus,
         result.rss,
         result.monteCarlo.mean,
         result.monteCarlo.p99,

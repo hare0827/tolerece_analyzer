@@ -11,12 +11,7 @@ function randNormal(): number {
   return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
-/** Uniform[-t, t] 샘플 */
-function randUniform(t: number): number {
-  return (Math.random() * 2 - 1) * t;
-}
-
-/** 히스토그램 생성 (binCount개 구간) */
+/** 히스토그램 생성 (부호 있는 데이터, binCount개 구간) */
 function buildHistogram(
   data: number[],
   binCount = 20
@@ -25,7 +20,6 @@ function buildHistogram(
   const max = Math.max(...data);
   const width = (max - min) / binCount;
 
-  // 모든 샘플이 동일한 값(상수) → bin 1개로 처리
   if (width === 0) {
     return [{ bin: +min.toFixed(4), count: data.length },
       ...Array.from({ length: binCount - 1 }, (_, i) => ({
@@ -51,13 +45,12 @@ export function runMonteCarlo(
 ): MonteCarloResult {
   const enabled = parts.filter((p) => p.enabled);
 
-  // 활성화된 부품이 없으면 영(zero) 결과 반환
   if (enabled.length === 0) {
     return {
       mean: 0,
       stdDev: 0,
       p99: 0,
-      histogram: Array.from({ length: 20 }, (_, i) => ({ bin: i * 0.01, count: i === 0 ? samples : 0 })),
+      histogram: Array.from({ length: 20 }, (_, i) => ({ bin: (i - 10) * 0.01, count: i === 10 ? samples : 0 })),
     };
   }
 
@@ -65,33 +58,42 @@ export function runMonteCarlo(
   const sums: number[] = new Array(samples).fill(0);
 
   for (const part of enabled) {
-    const tol = (part.upperTol + part.lowerTol) / 2;
-    const sigma = tol / (3 * (part.cpk / 1.33)); // Cpk 보정
+    const cpkFactor = part.cpk / 1.33;
+    // 비대칭 공차: 양/음 방향별 sigma 독립 적용
+    const sigmaPlus  = part.upperTol / (3 * cpkFactor);
+    const sigmaMinus = part.lowerTol / (3 * cpkFactor);
 
     for (let i = 0; i < samples; i++) {
-      const sample =
-        part.distribution === 'uniform'
-          ? randUniform(tol)
-          : randNormal() * sigma;
-      sums[i] += sample; // 부호 있는 합산 — Math.abs() 금지
+      let sample: number;
+      if (part.distribution === 'uniform') {
+        // 비대칭 균일분포: [-lowerTol, +upperTol]
+        sample = Math.random() * (part.upperTol + part.lowerTol) - part.lowerTol;
+      } else {
+        // 비대칭 정규분포: 양수이면 sigmaPlus, 음수이면 sigmaMinus 적용
+        const raw = randNormal();
+        sample = raw >= 0 ? raw * sigmaPlus : raw * sigmaMinus;
+      }
+      sums[i] += sample;
     }
   }
 
-  // 합산된 스택업 편차의 절댓값으로 분포 분석
+  // 절댓값 기반 통계 (mean, p99) — 판정 기준
   const absSums = sums.map(Math.abs);
-
   const mean = absSums.reduce((a, b) => a + b, 0) / samples;
-  const variance = absSums.reduce((a, b) => a + (b - mean) ** 2, 0) / samples;
+
+  // stdDev는 부호 있는 분포 기준 (공정 시그마, 더 직관적)
+  const sumsMean = sums.reduce((a, b) => a + b, 0) / samples;
+  const variance = sums.reduce((a, b) => a + (b - sumsMean) ** 2, 0) / samples;
   const stdDev = Math.sqrt(variance);
 
   const sorted = [...absSums].sort((a, b) => a - b);
-  // 정확한 99th percentile: ceil(n*0.99) - 1 (0-indexed)
   const p99 = sorted[Math.ceil(samples * 0.99) - 1];
 
   return {
     mean,
     stdDev,
     p99,
-    histogram: buildHistogram(absSums),
+    // 부호 있는 분포 히스토그램 — 종형 곡선 형태로 표시
+    histogram: buildHistogram(sums),
   };
 }

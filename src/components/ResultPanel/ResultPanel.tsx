@@ -29,7 +29,9 @@ export function ResultPanel({ result, targetTol, mcRunning }: Props) {
       <div className="bg-gray-50 rounded-lg p-3 space-y-1">
         <div className={ROW}>
           <span className={LABEL}>Worst Case</span>
-          <span className={VALUE}>±{fmt4(result.worstCase)} mm</span>
+          <span className={VALUE}>
+            +{fmt4(result.worstCase.plus)} / -{fmt4(result.worstCase.minus)} mm
+          </span>
         </div>
         <div className={ROW}>
           <span className={LABEL}>RSS</span>

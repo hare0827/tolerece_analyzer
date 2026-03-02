@@ -19,28 +19,43 @@ const makePart = (
 });
 
 describe('calcWorstCase', () => {
-  it('단일 부품 대칭 공차', () => {
-    expect(calcWorstCase([makePart('A', 0.05, 0.05)])).toBeCloseTo(0.05);
+  it('단일 대칭 공차 → plus = minus = 0.05', () => {
+    const wc = calcWorstCase([makePart('A', 0.05, 0.05)]);
+    expect(wc.plus).toBeCloseTo(0.05);
+    expect(wc.minus).toBeCloseTo(0.05);
   });
 
   it('다중 부품 합산', () => {
     const parts = [makePart('A', 0.05, 0.05), makePart('B', 0.10, 0.10)];
-    expect(calcWorstCase(parts)).toBeCloseTo(0.15);
+    const wc = calcWorstCase(parts);
+    expect(wc.plus).toBeCloseTo(0.15);
+    expect(wc.minus).toBeCloseTo(0.15);
   });
 
   it('비활성화 부품 제외', () => {
     const parts = [makePart('A', 0.05, 0.05), makePart('B', 0.10, 0.10, false)];
-    expect(calcWorstCase(parts)).toBeCloseTo(0.05);
+    const wc = calcWorstCase(parts);
+    expect(wc.plus).toBeCloseTo(0.05);
+    expect(wc.minus).toBeCloseTo(0.05);
   });
 
-  it('비대칭 공차 — 평균값 사용', () => {
-    // upper=0.06, lower=0.02 → effective = 0.04
-    expect(calcWorstCase([makePart('A', 0.06, 0.02)])).toBeCloseTo(0.04);
+  it('비대칭 공차 — 방향별로 정확히 분리', () => {
+    // +0.10 / -0.05 → plus=0.10, minus=0.05 (평균 0.075 아님)
+    const wc = calcWorstCase([makePart('A', 0.10, 0.05)]);
+    expect(wc.plus).toBeCloseTo(0.10);
+    expect(wc.minus).toBeCloseTo(0.05);
+  });
+
+  it('두 비대칭 부품 합산', () => {
+    const parts = [makePart('A', 0.10, 0.05), makePart('B', 0.08, 0.03)];
+    const wc = calcWorstCase(parts);
+    expect(wc.plus).toBeCloseTo(0.18);
+    expect(wc.minus).toBeCloseTo(0.08);
   });
 });
 
 describe('calcRSS', () => {
-  it('단일 부품', () => {
+  it('단일 대칭 부품', () => {
     expect(calcRSS([makePart('A', 0.05, 0.05)])).toBeCloseTo(0.05);
   });
 
@@ -49,9 +64,14 @@ describe('calcRSS', () => {
     expect(calcRSS(parts)).toBeCloseTo(Math.sqrt(0.05 ** 2 + 0.05 ** 2));
   });
 
-  it('RSS ≤ Worst Case (항상 성립)', () => {
+  it('비대칭 공차 — max(upper, lower) 사용 (보수적)', () => {
+    // upper=0.10, lower=0.05 → max=0.10 → RSS=0.10
+    expect(calcRSS([makePart('A', 0.10, 0.05)])).toBeCloseTo(0.10);
+  });
+
+  it('RSS ≤ Worst Case plus (항상 성립)', () => {
     const parts = [makePart('A', 0.05, 0.05), makePart('B', 0.10, 0.10)];
-    expect(calcRSS(parts)).toBeLessThanOrEqual(calcWorstCase(parts));
+    expect(calcRSS(parts)).toBeLessThanOrEqual(calcWorstCase(parts).plus);
   });
 });
 
@@ -73,9 +93,15 @@ describe('calcSensitivity', () => {
     expect(calcSensitivity([makePart('A', 0, 0)])).toHaveLength(0);
   });
 
-  it('name 필드가 partId와 동일하게 포함됨 (name 미입력 시)', () => {
-    const parts = [makePart('A', 0.05, 0.05)];
+  it('비대칭 공차 — max 기준으로 기여도 계산', () => {
+    // A: max(0.10, 0.05)=0.10, B: max(0.10, 0.05)=0.10 → 각 50%
+    const parts = [makePart('A', 0.10, 0.05), makePart('B', 0.10, 0.05)];
     const s = calcSensitivity(parts);
+    expect(s[0].percentage).toBeCloseTo(50);
+  });
+
+  it('name 필드 포함', () => {
+    const s = calcSensitivity([makePart('A', 0.05, 0.05)]);
     expect(s[0].name).toBe('A');
   });
 });
