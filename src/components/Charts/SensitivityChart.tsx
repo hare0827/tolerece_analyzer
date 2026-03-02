@@ -4,12 +4,11 @@ import { fmtPct } from '../../utils/formatters';
 
 interface Props {
   sensitivity: SensitivityItem[];
-  partNames: Record<string, string>;
 }
 
-export function SensitivityChart({ sensitivity, partNames }: Props) {
+export function SensitivityChart({ sensitivity }: Props) {
   const data = sensitivity.map((s) => ({
-    subject: partNames[s.partId] || s.partId,
+    subject: s.name,
     value: +s.percentage.toFixed(1),
   }));
 

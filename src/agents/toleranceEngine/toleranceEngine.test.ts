@@ -72,4 +72,10 @@ describe('calcSensitivity', () => {
   it('공차 합이 0이면 빈 배열', () => {
     expect(calcSensitivity([makePart('A', 0, 0)])).toHaveLength(0);
   });
+
+  it('name 필드가 partId와 동일하게 포함됨 (name 미입력 시)', () => {
+    const parts = [makePart('A', 0.05, 0.05)];
+    const s = calcSensitivity(parts);
+    expect(s[0].name).toBe('A');
+  });
 });

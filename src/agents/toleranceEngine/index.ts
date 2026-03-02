@@ -33,6 +33,7 @@ export function calcSensitivity(parts: TolerancePart[]): SensitivityItem[] {
   if (sumSq === 0) return [];
   return enabled.map((p) => ({
     partId: p.id,
+    name: p.name || p.id,
     percentage: (effectiveTol(p) ** 2 / sumSq) * 100,
   }));
 }

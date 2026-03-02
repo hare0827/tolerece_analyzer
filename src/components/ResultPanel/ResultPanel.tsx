@@ -6,14 +6,13 @@ interface Props {
   result: CalculationResult;
   targetTol: number;
   mcRunning: boolean;
-  partNames: Record<string, string>;
 }
 
 const ROW = 'flex justify-between items-center py-1 border-b border-gray-100';
 const LABEL = 'text-sm text-gray-600';
 const VALUE = 'text-sm font-mono font-semibold text-gray-800';
 
-export function ResultPanel({ result, targetTol, mcRunning, partNames }: Props) {
+export function ResultPanel({ result, targetTol, mcRunning }: Props) {
   const topSensitivity = [...result.sensitivity]
     .sort((a, b) => b.percentage - a.percentage)
     .slice(0, 5);
@@ -66,7 +65,7 @@ export function ResultPanel({ result, targetTol, mcRunning, partNames }: Props) 
             <div key={s.partId} className="flex items-center gap-2">
               <span className="text-xs text-gray-500 w-4 text-right">{i + 1}.</span>
               <span className="text-xs text-gray-700 flex-1 truncate">
-                {partNames[s.partId] || s.partId}
+                {s.name}
               </span>
               <div className="flex items-center gap-1 w-32">
                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">

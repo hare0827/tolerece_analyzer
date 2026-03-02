@@ -11,6 +11,7 @@ export interface TolerancePart {
 
 export interface SensitivityItem {
   partId: string;
+  name: string;
   percentage: number;
 }
 

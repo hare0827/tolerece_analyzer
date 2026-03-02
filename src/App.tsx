@@ -27,10 +27,6 @@ export default function App() {
   const [pendingParts, setPendingParts] = useState<TolerancePart[] | null>(null);
   const [csvFailedRows, setCsvFailedRows] = useState(0);
 
-  const partNames: Record<string, string> = Object.fromEntries(
-    parts.map((p) => [p.id, p.name || p.id])
-  );
-
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -47,7 +43,6 @@ export default function App() {
   function confirmImport() {
     if (pendingParts) setParts(pendingParts);
     setPendingParts(null);
-    // 파일 인풋 초기화 — 동일 파일 재선택 시 onChange가 다시 트리거되도록
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -161,7 +156,6 @@ export default function App() {
                 result={result}
                 targetTol={targetTol}
                 mcRunning={mcRunning}
-                partNames={partNames}
               />
             ) : (
               <p className="text-xs text-gray-400">유효한 공차값을 입력하세요.</p>
@@ -180,10 +174,7 @@ export default function App() {
               />
             </div>
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <SensitivityChart
-                sensitivity={result.sensitivity}
-                partNames={partNames}
-              />
+              <SensitivityChart sensitivity={result.sensitivity} />
             </div>
           </div>
         )}
