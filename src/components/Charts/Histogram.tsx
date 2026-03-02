@@ -30,8 +30,8 @@ export function Histogram({ histogram, targetTol, p99 }: Props) {
           />
           <YAxis tick={{ fontSize: 10 }} width={40} />
           <Tooltip
-            formatter={(v: number) => [v, '빈도']}
-            labelFormatter={(l: number) => `구간: ${fmt4(l)} mm`}
+            formatter={(v: number | undefined) => [v ?? 0, '빈도']}
+            labelFormatter={(l: unknown) => `구간: ${fmt4(Number(l))} mm`}
           />
           <Bar dataKey="count" fill="#93c5fd" radius={[2, 2, 0, 0]} />
           <ReferenceLine

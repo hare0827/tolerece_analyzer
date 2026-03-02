@@ -31,7 +31,7 @@ export function SensitivityChart({ sensitivity, partNames }: Props) {
             fill="#fb923c"
             fillOpacity={0.4}
           />
-          <Tooltip formatter={(v: number) => [fmtPct(v), '기여도']} />
+          <Tooltip formatter={(v: number | undefined) => [fmtPct(v ?? 0), '기여도']} />
         </RadarChart>
       </ResponsiveContainer>
     </div>
